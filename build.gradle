@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'maven'
+    id "com.github.johnrengelman.shadow" version "5.2.0"
+}
+
+group = 'net.lapismc'
+archivesBaseName = "LapisMine"
+version = '0.1.0'
+sourceCompatibility = '11'
+targetCompatibility = '11'
+defaultTasks 'clean', 'build', 'shadowJar', 'install'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        name = "spigotmc-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+    }
+    maven {
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+}
+
+dependencies {
+    implementation 'net.lapismc:LapisCore:1.12.1'
+    implementation 'org.ocpsoft.prettytime:prettytime:5.0.6.Final'
+    compileOnly "org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT"
+}
+
+
+shadowJar {
+    archiveFileName.set(archivesBaseName + "-" + project.getVersion() + ".jar")
+    exclude 'javax/**'
+    relocate("org.ocpsoft.prettytime", "net.lapismc.lapismine.util.prettytime")
+    relocate("net.lapismc.lapiscore", "net.lapismc.lapismine.util.core")
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar, shadowJar
+}
+
+processResources {
+    filter {
+        it.replace('${project.version}', project.getVersion())
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

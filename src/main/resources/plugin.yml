@@ -1,0 +1,5 @@
+name: LapisMine
+version: ${project.version}
+main: net.lapismc.lapismine.LapisMine
+api-version: 1.19
+authors: [ Dart2112 ]

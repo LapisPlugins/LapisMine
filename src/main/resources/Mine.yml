@@ -1,0 +1,10 @@
+Name: MineName
+Locations:
+  teleport: "TeleportLocationString"
+  l1: "LocationStringGoesHere"
+  l2: "AnotherLocationHere"
+Surface: "STONE"
+Composition:
+  - "Material:Probability"
+  - "Stone:0.5"
+  - "Diamonds:0.01"
