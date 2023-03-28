@@ -1,3 +1,5 @@
+ConfigVersion: 1
+
 Create:
   Help: "/lapismine create (name)"
   MineExists: "&sA mine of that name already exists"
@@ -13,6 +15,7 @@ Config:
   ResetFrequency:
     NotInt: "&sThe frequency value must be a whole number"
     Success: "&pThe reset frequency has been updated"
+  TeleportSuccess: "&pThe teleport location has been set to your current location"
 
 Reset:
   Help: "/lapismine reset (mineName)"

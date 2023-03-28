@@ -39,6 +39,7 @@ public final class LapisMine extends LapisCorePlugin {
     public void createMine(String name, Location l1, Location l2) {
         Mine m = new Mine(this, name, l1, l2);
         mines.add(m);
+        saveMines();
     }
 
     /**

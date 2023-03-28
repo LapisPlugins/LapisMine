@@ -13,10 +13,11 @@ import java.util.Collections;
 
 public class LapisMineCommand extends LapisCoreCommand {
 
-    private LapisMine plugin;
+    private final LapisMine plugin;
 
     public LapisMineCommand(LapisMine plugin) {
         super(plugin, "lapismine", "Manage your mines", Collections.singletonList("mine"), true);
+        this.plugin = plugin;
     }
 
     @Override
@@ -42,6 +43,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                     Location l1 = we.getL1(p);
                     Location l2 = we.getL2(p);
                     plugin.createMine(name, l1, l2);
+                    sendMessage(sender, "Create.Success");
                 } else {
                     sendMessage(sender, "Create.Help");
                     return;
@@ -100,6 +102,10 @@ public class LapisMineCommand extends LapisCoreCommand {
                             }
                             m.setResetFrequency(i);
                             sendMessage(sender, "Config.ResetFrequency.Success");
+                            break;
+                        case "teleport":
+                            m.setTeleport(p.getLocation());
+                            sendMessage(sender, "Config.TeleportSuccess");
                             break;
                         default:
                             sendMessage(sender, "Config.NoSuchSetting");

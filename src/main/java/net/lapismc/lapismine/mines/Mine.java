@@ -31,7 +31,8 @@ public class Mine {
                 Material surface, Integer resetFrequency) {
         this.plugin = plugin;
         this.name = name;
-        //TODO: Calculate default teleport location
+        //TODO: Calculate the middle at the top maybe?
+        teleport = l1.clone().add(0, 2, 0);
         this.l1 = l1;
         this.l2 = l2;
         this.composition = composition;
@@ -63,7 +64,7 @@ public class Mine {
             resetTask.cancel();
         }
         //Make the new task and register it with LapisTaskHandler to make sure it gets shutdown on disable
-        resetTask = Bukkit.getScheduler().runTaskTimer(plugin, this::resetMine, resetFrequency, resetFrequency);
+        resetTask = Bukkit.getScheduler().runTaskTimer(plugin, this::resetMine, resetFrequency * 20 * 60, resetFrequency * 20 * 60);
         plugin.tasks.addTask(resetTask);
     }
 
@@ -118,7 +119,7 @@ public class Mine {
         yMin = Math.min(l1.getBlockY(), l2.getBlockY());
         zMax = Math.max(l1.getBlockZ(), l2.getBlockZ());
         zMin = Math.min(l1.getBlockZ(), l2.getBlockZ());
-        Location pLoc = p.getLocation();
+        Location pLoc = p.getLocation().getBlock().getLocation();
         if (pLoc.getX() < xMax && pLoc.getX() > xMin) {
             if (pLoc.getZ() < zMax && pLoc.getZ() > zMin) {
                 return pLoc.getY() < yMax && pLoc.getY() > yMin;
