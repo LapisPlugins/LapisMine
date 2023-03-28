@@ -1,16 +1,38 @@
 ConfigVersion: 1
 
+PrimaryColor: "6"
+SecondaryColor: "c"
+
 Create:
-  Help: "/lapismine create (name)"
+  Help: "/lapismine create (mineName)"
   MineExists: "&sA mine of that name already exists"
   NoRegion: "&sYou must first select a region using world edit!"
   Success: "&pMine created!"
 
+Remove:
+  Help: "/lapismine remove (mineName)"
+  Success: "&pMine removed"
+
+Composition:
+  Help: "/lapismine composition (status|add|remove)"
+  RemainingPercentage: "&pThe remaining percentage to assign is:"
+  Status: "&pThe following is the current composition:"
+  Fill: "&pThe remaining space in the composition was filled with the fill material"
+  Remove:
+    Help: "/lapismine composition (mineName) remove (material)"
+    MaterialNotPresent: "&sThat material is not in the composition"
+    Success: "&pMaterial removed from the composition of the mine"
+  Set:
+    Help: "/lapismine composition (mineName) set (material) (percentage e.g. 0.20 = 20%)"
+    NotABlock: "&sThe provided material is not a block, only blocks can be a part of a mines composition"
+    InvalidPercentage: "&sThe percentage must be between 0.0 and 1.0"
+    PercentageTooHigh: "&sThe percentage you gave was too high"
+    Success: "&pThe material has been added to the composition"
+
 Config:
   Help: "/lapismine config (mineName) (settingName) (settingValue)"
-  NoSuchSetting: "There is no setting with that name, the options are surface, resetfrequency"
+  NoSuchSetting: "There is no setting with that name, the options are surface, resetfrequency and teleport"
   Surface:
-    MaterialNotFound: "&sCould not find a material with that name, please verify it and try again or set to none"
     Success: "&pSurface updated!"
   ResetFrequency:
     NotInt: "&sThe frequency value must be a whole number"
@@ -21,7 +43,9 @@ Reset:
   Help: "/lapismine reset (mineName)"
   Teleport: "&pThis mine is resetting, you have been teleported out for your own safety"
   Success: "&pMine resetting now!"
+  CompositionIncomplete: "&sThe composition of this mine is incomplete. You must fix this before it can be reset"
 
 Error:
   MustBePlayer: "&sYou must be a player to do that!"
   NoSuchMine: "&sA mine of that name doesn't exist!"
+  MaterialNotFound: "&sCould not find a material with that name, please verify it and try again or set to none"

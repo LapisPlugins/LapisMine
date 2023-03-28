@@ -57,13 +57,22 @@ public class Composition {
     }
 
     /**
+     * Get the material map, note that this is the non compiled version
+     *
+     * @return a map containing materials and their change of occurrence between 0 and 1
+     */
+    public Map<Material, Double> getMaterialMap() {
+        return materialMap;
+    }
+
+    /**
      * Adds a material to the composition
      *
      * @param mat        The material to add
      * @param percentage The percentage chance of this material occurring within the total composition
      * @return True if the percentage will be at or under 1 after this operation, false if the percentage is too high
      */
-    public boolean addMaterial(Material mat, Double percentage) {
+    public boolean setMaterial(Material mat, Double percentage) {
         if (getTotalPercentage() + percentage > 1) {
             //Total too high, can we fit it with reducing the default fill material
             Double fillMaterialPercentage = materialMap.get(plugin.fillMaterial);
@@ -72,6 +81,7 @@ public class Composition {
                 materialMap.remove(plugin.fillMaterial);
                 materialMap.put(mat, percentage);
                 fillMaterial(plugin.fillMaterial);
+                compiledMaterials = null;
                 return true;
             } else {
                 //Cannot fit even with a reduction of fill
@@ -79,8 +89,23 @@ public class Composition {
             }
         } else {
             materialMap.put(mat, percentage);
+            compiledMaterials = null;
             return true;
         }
+    }
+
+    /**
+     * Remove a material from the composition
+     *
+     * @param mat The material to remove
+     * @return returns true if the material was a part of the composition and has been removed, otherwise false
+     */
+    public boolean removeMaterial(Material mat) {
+        if (!materialMap.containsKey(mat))
+            return false;
+        materialMap.remove(mat);
+        compiledMaterials = null;
+        return true;
     }
 
     /**
@@ -89,8 +114,9 @@ public class Composition {
      * @param mat The material to fill with
      */
     public void fillMaterial(Material mat) {
+        removeMaterial(mat);
         Double percentage = 1 - getTotalPercentage();
-        addMaterial(mat, percentage);
+        setMaterial(mat, percentage);
     }
 
     /**
@@ -115,6 +141,10 @@ public class Composition {
             data.add(s);
         }
         return data;
+    }
+
+    public double getUnassignedPercentage() {
+        return 1 - getTotalPercentage();
     }
 
     /**

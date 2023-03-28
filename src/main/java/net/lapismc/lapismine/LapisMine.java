@@ -36,10 +36,28 @@ public final class LapisMine extends LapisCorePlugin {
         super.onDisable();
     }
 
+    /**
+     * Creates an empty mine object with the given points and name, will not proceed if there is already a mine with this name
+     *
+     * @param name The name of the mine
+     * @param l1   The maximum point of the mine
+     * @param l2   the minimum point of the mine
+     */
     public void createMine(String name, Location l1, Location l2) {
+        if (getMine(name) != null)
+            return;
         Mine m = new Mine(this, name, l1, l2);
         mines.add(m);
         saveMines();
+    }
+
+    /**
+     * Simply removes the mine from the stored list of mines in the main class. Make sure you call deleteMine on the mine class first
+     *
+     * @param m The mine to remove
+     */
+    public void removeMine(Mine m) {
+        mines.remove(m);
     }
 
     /**
@@ -61,13 +79,14 @@ public final class LapisMine extends LapisCorePlugin {
         File minesFolder = new File(getDataFolder(), "Mines");
         if (!minesFolder.exists())
             minesFolder.mkdir();
+        //TODO: Add message for how many mines get loaded
         for (File f : minesFolder.listFiles()) {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(f);
             mines.add(new Mine(this, config));
         }
     }
 
-    private void saveMines() {
+    public void saveMines() {
         File minesFolder = new File(getDataFolder(), "Mines");
         for (Mine m : mines) {
             File f = new File(minesFolder, m.getName() + ".yml");
@@ -82,4 +101,5 @@ public final class LapisMine extends LapisCorePlugin {
             m.saveMine(config);
         }
     }
+
 }

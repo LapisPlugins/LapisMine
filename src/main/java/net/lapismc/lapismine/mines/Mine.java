@@ -31,8 +31,9 @@ public class Mine {
                 Material surface, Integer resetFrequency) {
         this.plugin = plugin;
         this.name = name;
-        //TODO: Calculate the middle at the top maybe?
-        teleport = l1.clone().add(0, 2, 0);
+        //Calculate the middle at the top
+        teleport = new Location(l1.getWorld(), (l1.getBlockX() + l2.getBlockX()) / 2f,
+                l1.getY() + 2, (l1.getZ() + l2.getZ()) / 2);
         this.l1 = l1;
         this.l2 = l2;
         this.composition = composition;
@@ -68,11 +69,16 @@ public class Mine {
         plugin.tasks.addTask(resetTask);
     }
 
-    public void resetMine() {
+    /**
+     * Reset the mine
+     *
+     * @return true if the mine resets, false if the composition is not complete
+     */
+    public boolean resetMine() {
         //Check if the mine is able to reset
         if (!composition.isValidComposition())
             //Don't run if the composition isn't valid
-            return;
+            return false;
         //Teleport Players in mine and send them a message
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (isPlayerInMine(p)) {
@@ -81,7 +87,21 @@ public class Mine {
             }
         }
         regenerateMine();
+        return true;
     }
+
+    /**
+     * Sets up the mine to be deleted, this includes removing its config file and disabling the reset task
+     * This won't remove it from the mines list in the main class, call plugin#removeMine(Mine) for that
+     */
+    public void deleteMine() {
+        //Cancel the reset task
+        resetTask.cancel();
+        //Delete the mines config data so that it won't be created again on reload
+        File f = new File(plugin.getDataFolder(), "Mines" + File.separator + name + ".yml");
+        f.delete();
+    }
+
 
     /**
      * Regenerate the blocks within the mine based on the current composition
@@ -129,8 +149,9 @@ public class Mine {
     }
 
     private void setBlock(int x, int y, int z, Material mat) {
+        //TODO: Potentially queue up the blocks to be placed later
         World w = l1.getWorld();
-        w.getBlockAt(x, y, z).setType(mat);
+        w.getBlockAt(x, y, z).setType(mat, false);
     }
 
     public void saveMine(YamlConfiguration config) {

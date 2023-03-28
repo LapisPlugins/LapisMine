@@ -10,6 +10,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
+import java.util.Map;
 
 public class LapisMineCommand extends LapisCoreCommand {
 
@@ -50,18 +51,32 @@ public class LapisMineCommand extends LapisCoreCommand {
                 }
                 return;
             }
+
+            if (args[0].equalsIgnoreCase("remove")) {
+                String name = args[1];
+                Mine m = plugin.getMine(name);
+                if (m == null) {
+                    sendMessage(sender, "Error.NoSuchMine");
+                    return;
+                }
+                m.deleteMine();
+                plugin.removeMine(m);
+                return;
+            }
+
+            if (args[0].equalsIgnoreCase("composition")) {
+                if (args.length > 2) {
+                    composition(sender, args, p);
+                } else {
+                    sendMessage(sender, "Composition.Help");
+                }
+                return;
+            }
+
             //mine reset (mineName)
             if (args[0].equalsIgnoreCase("reset")) {
                 if (args.length == 2) {
-                    String name = args[1];
-                    Mine m = plugin.getMine(name);
-                    if (m == null) {
-                        sendMessage(sender, "Error.NoSuchMine");
-                        return;
-                    }
-                    m.resetMine();
-                    m.startResetTimer();
-                    sendMessage(sender, "Reset.Success");
+                    resetMine(sender, args[1]);
                 } else {
                     sendMessage(sender, "Reset.Help");
                 }
@@ -85,11 +100,12 @@ public class LapisMineCommand extends LapisCoreCommand {
                             } else {
                                 Material mat = Material.matchMaterial(settingValue);
                                 if (mat == null) {
-                                    sendMessage(sender, "Config.Surface.MaterialNotFound");
+                                    sendMessage(sender, "Error.MaterialNotFound");
                                     return;
                                 }
                                 m.setSurface(mat);
                                 sendMessage(sender, "Config.Surface.Success");
+                                plugin.saveMines();
                             }
                             break;
                         case "resetfrequency":
@@ -102,9 +118,11 @@ public class LapisMineCommand extends LapisCoreCommand {
                             }
                             m.setResetFrequency(i);
                             sendMessage(sender, "Config.ResetFrequency.Success");
+                            plugin.saveMines();
                             break;
                         case "teleport":
                             m.setTeleport(p.getLocation());
+                            plugin.saveMines();
                             sendMessage(sender, "Config.TeleportSuccess");
                             break;
                         default:
@@ -114,6 +132,100 @@ public class LapisMineCommand extends LapisCoreCommand {
                     sendMessage(sender, "Config.Help");
                 }
             }
+        }
+    }
+
+    private void composition(CommandSender sender, String[] args, Player p) {
+        //mine composition mine set MATERIAL PERCENT
+        //mine composition mine remove MATERIAL
+        //mine composition mine status
+        //mine composition mine fill
+        String name = args[1];
+        Mine m = plugin.getMine(name);
+        if (m == null) {
+            sendMessage(sender, "Error.NoSuchMine");
+            return;
+        }
+        String command = args[2];
+        if (command.equalsIgnoreCase("status")) {
+            sendMessage(sender, "Composition.Status");
+            Map<Material, Double> matMap = m.getComposition().getMaterialMap();
+            for (Material mat : matMap.keySet()) {
+                Double d = matMap.get(mat);
+                p.sendMessage(mat.name() + " - " + d);
+            }
+            sendMessage(sender, "Composition.RemainingPercentage");
+            p.sendMessage(m.getComposition().getUnassignedPercentage() + "");
+
+        } else if (command.equalsIgnoreCase("remove")) {
+            if (args.length != 4) {
+                sendMessage(sender, "Composition.Remove.Help");
+                return;
+            }
+            Material mat = Material.matchMaterial(args[3]);
+            if (mat == null) {
+                sendMessage(sender, "Error.MaterialNotFound");
+                return;
+            }
+            if (m.getComposition().removeMaterial(mat)) {
+                sendMessage(sender, "Composition.Remove.Success");
+            } else {
+                sendMessage(sender, "Composition.Remove.MaterialNotPresent");
+            }
+            sendMessage(sender, "Composition.RemainingPercentage");
+            p.sendMessage(m.getComposition().getUnassignedPercentage() + "");
+            //Save these changes to the mine
+            plugin.saveMines();
+
+        } else if (command.equalsIgnoreCase("set")) {
+            if (args.length != 5) {
+                sendMessage(sender, "Composition.Set.Help");
+                return;
+            }
+            Material mat = Material.matchMaterial(args[3]);
+            if (mat == null) {
+                sendMessage(sender, "Error.MaterialNotFound");
+                return;
+            }
+            if (!mat.isBlock()) {
+                sendMessage(sender, "Composition.Set.NotABlock");
+                return;
+            }
+            String percentageString = args[4];
+            double percentage;
+            try {
+                percentage = Double.parseDouble(percentageString);
+            } catch (NumberFormatException e) {
+                sendMessage(sender, "Composition.Set.InvalidPercentage");
+                return;
+            }
+            if (m.getComposition().setMaterial(mat, percentage)) {
+                sendMessage(sender, "Composition.Set.Success");
+            } else {
+                sendMessage(sender, "Composition.Set.PercentageTooHigh");
+            }
+            sendMessage(sender, "Composition.RemainingPercentage");
+            p.sendMessage(m.getComposition().getUnassignedPercentage() + "");
+            //Save the mine to keep these changes
+            plugin.saveMines();
+
+        } else if (command.equalsIgnoreCase("fill")) {
+            m.getComposition().fillMaterial(plugin.fillMaterial);
+            sendMessage(sender, "Composition.Fill");
+        }
+    }
+
+    private void resetMine(CommandSender sender, String name) {
+        Mine m = plugin.getMine(name);
+        if (m == null) {
+            sendMessage(sender, "Error.NoSuchMine");
+            return;
+        }
+        if (m.resetMine()) {
+            m.startResetTimer();
+            sendMessage(sender, "Reset.Success");
+        } else {
+            sendMessage(sender, "Reset.CompositionIncomplete");
         }
     }
 }
