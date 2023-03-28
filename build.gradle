@@ -37,8 +37,6 @@ dependencies {
     implementation 'org.ocpsoft.prettytime:prettytime:5.0.6.Final'
     compileOnly "org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT"
     compileOnly "com.sk89q.worldedit:worldedit-bukkit:7.2.9-SNAPSHOT"
-    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core")
-    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit")
 }
 
 
