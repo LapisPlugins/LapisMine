@@ -1,0 +1,24 @@
+Create:
+  Help: "/lapismine create (name)"
+  MineExists: "&sA mine of that name already exists"
+  NoRegion: "&sYou must first select a region using world edit!"
+  Success: "&pMine created!"
+
+Config:
+  Help: "/lapismine config (mineName) (settingName) (settingValue)"
+  NoSuchSetting: "There is no setting with that name, the options are surface, resetfrequency"
+  Surface:
+    MaterialNotFound: "&sCould not find a material with that name, please verify it and try again or set to none"
+    Success: "&pSurface updated!"
+  ResetFrequency:
+    NotInt: "&sThe frequency value must be a whole number"
+    Success: "&pThe reset frequency has been updated"
+
+Reset:
+  Help: "/lapismine reset (mineName)"
+  Teleport: "&pThis mine is resetting, you have been teleported out for your own safety"
+  Success: "&pMine resetting now!"
+
+Error:
+  MustBePlayer: "&sYou must be a player to do that!"
+  NoSuchMine: "&sA mine of that name doesn't exist!"

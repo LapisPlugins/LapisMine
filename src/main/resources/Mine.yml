@@ -4,6 +4,8 @@ Locations:
   l1: "LocationStringGoesHere"
   l2: "AnotherLocationHere"
 Surface: "STONE"
+#In minutes, how often does the mine reset
+ResetFrequency: 15
 Composition:
   - "Material:Probability"
   - "Stone:0.5"

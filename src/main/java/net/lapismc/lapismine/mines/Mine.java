@@ -2,10 +2,13 @@ package net.lapismc.lapismine.mines;
 
 import net.lapismc.lapiscore.utils.LocationUtils;
 import net.lapismc.lapismine.LapisMine;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,8 +24,11 @@ public class Mine {
     private String name;
     private Location teleport, l1, l2;
     private Material surface;
+    private Integer resetFrequency;
+    private BukkitTask resetTask;
 
-    public Mine(LapisMine plugin, String name, Location l1, Location l2, Composition composition, Material surface) {
+    public Mine(LapisMine plugin, String name, Location l1, Location l2, Composition composition,
+                Material surface, Integer resetFrequency) {
         this.plugin = plugin;
         this.name = name;
         //TODO: Calculate default teleport location
@@ -30,6 +36,8 @@ public class Mine {
         this.l2 = l2;
         this.composition = composition;
         this.surface = surface;
+        this.resetFrequency = resetFrequency;
+        startResetTimer();
     }
 
     public Mine(LapisMine plugin, YamlConfiguration config) {
@@ -40,16 +48,46 @@ public class Mine {
         l2 = locationUtils.parseStringToLocation(config.getString("Locations.l2"));
         composition = new Composition(plugin, config.getStringList("Composition"));
         surface = Material.getMaterial(config.getString("Surface", ""));
+        resetFrequency = config.getInt("ResetFrequency");
+        startResetTimer();
     }
 
     public Mine(LapisMine plugin, String name, Location l1, Location l2) {
-        this(plugin, name, l1, l2, new Composition(plugin), null);
+        this(plugin, name, l1, l2, new Composition(plugin), null, 15);
+    }
+
+    public void startResetTimer() {
+        if (resetTask != null) {
+            //Remove the old task, this is so that the mine reset timer can be reset if the mine is manually reset
+            plugin.tasks.removeTask(resetTask);
+            resetTask.cancel();
+        }
+        //Make the new task and register it with LapisTaskHandler to make sure it gets shutdown on disable
+        resetTask = Bukkit.getScheduler().runTaskTimer(plugin, this::resetMine, resetFrequency, resetFrequency);
+        plugin.tasks.addTask(resetTask);
+    }
+
+    public void resetMine() {
+        //Check if the mine is able to reset
+        if (!composition.isValidComposition())
+            //Don't run if the composition isn't valid
+            return;
+        //Teleport Players in mine and send them a message
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (isPlayerInMine(p)) {
+                p.teleport(teleport);
+                p.sendMessage(plugin.config.getMessage("Reset.Teleport"));
+            }
+        }
+        regenerateMine();
     }
 
     /**
      * Regenerate the blocks within the mine based on the current composition
+     * <p>
+     * WARNING: This only updates the block, it doesn't teleport players or send them a message
      */
-    public void regenerateMine() {
+    private void regenerateMine() {
         int xMax, xMin, yMax, yMin, zMax, zMin;
         xMax = Math.max(l1.getBlockX(), l2.getBlockX());
         xMin = Math.min(l1.getBlockX(), l2.getBlockX());
@@ -72,6 +110,23 @@ public class Mine {
         }
     }
 
+    private boolean isPlayerInMine(Player p) {
+        int xMax, xMin, yMax, yMin, zMax, zMin;
+        xMax = Math.max(l1.getBlockX(), l2.getBlockX());
+        xMin = Math.min(l1.getBlockX(), l2.getBlockX());
+        yMax = Math.max(l1.getBlockY(), l2.getBlockY());
+        yMin = Math.min(l1.getBlockY(), l2.getBlockY());
+        zMax = Math.max(l1.getBlockZ(), l2.getBlockZ());
+        zMin = Math.min(l1.getBlockZ(), l2.getBlockZ());
+        Location pLoc = p.getLocation();
+        if (pLoc.getX() < xMax && pLoc.getX() > xMin) {
+            if (pLoc.getZ() < zMax && pLoc.getZ() > zMin) {
+                return pLoc.getY() < yMax && pLoc.getY() > yMin;
+            }
+        }
+        return false;
+    }
+
     private void setBlock(int x, int y, int z, Material mat) {
         World w = l1.getWorld();
         w.getBlockAt(x, y, z).setType(mat);
@@ -87,6 +142,7 @@ public class Mine {
         else
             config.set("Surface", null);
         config.set("Composition", composition.parseToStringList());
+        config.set("ResetFrequency", resetFrequency);
         try {
             File f = new File(plugin.getDataFolder(), "Mines" + File.separator + name + ".yml");
             config.save(f);
@@ -101,6 +157,14 @@ public class Mine {
 
     public void setSurface(Material mat) {
         this.surface = mat;
+    }
+
+    public int getResetFrequency() {
+        return resetFrequency;
+    }
+
+    public void setResetFrequency(int minutes) {
+        this.resetFrequency = minutes;
     }
 
     public String getName() {

@@ -94,6 +94,15 @@ public class Composition {
     }
 
     /**
+     * Check if the composition is valid
+     *
+     * @return true if all percentages add to 1, otherwise false
+     */
+    public boolean isValidComposition() {
+        return getTotalPercentage() == 1;
+    }
+
+    /**
      * Used to save the composition to a config file
      *
      * @return a list of materials and doubles serialized to strings
