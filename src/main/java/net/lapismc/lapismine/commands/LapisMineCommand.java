@@ -114,9 +114,9 @@ public class LapisMineCommand extends LapisCoreCommand {
                                     return;
                                 }
                                 m.setSurface(mat);
-                                sendMessage(sender, "Config.Surface.Success");
-                                plugin.saveMines();
                             }
+                            sendMessage(sender, "Config.Surface.Success");
+                            plugin.saveMines();
                             break;
                         case "resetfrequency":
                             int i;

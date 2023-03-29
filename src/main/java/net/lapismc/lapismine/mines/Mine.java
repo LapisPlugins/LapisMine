@@ -183,7 +183,7 @@ public class Mine {
                             continue;
                         }
                     }
-                    if (y == yMax && surface != null) {
+                    if (y == yMax && surface != null && surface != Material.AIR) {
                         //yMin is the top layer, if we have a surface set then this whole layer should be set as it
                         setBlock(x, y, z, surface);
                     } else {
