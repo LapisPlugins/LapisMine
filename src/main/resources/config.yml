@@ -1,3 +1,5 @@
 ConfigVersion: 1
 
+# TODO: warning messages before reset with configurable time
+
 FillMaterial: STONE

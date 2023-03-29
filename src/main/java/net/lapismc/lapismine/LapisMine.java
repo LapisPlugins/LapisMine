@@ -16,18 +16,13 @@ import java.util.List;
 
 public final class LapisMine extends LapisCorePlugin {
 
+    private static LapisMine instance;
     public Material fillMaterial;
     public WorldEditIntegrationManager worldEditManager;
     private final List<Mine> mines = new ArrayList<>();
 
-    @Override
-    public void onEnable() {
-        config = new LapisCoreConfiguration(this, 1, 1);
-        fillMaterial = Material.getMaterial(getConfig().getString("FillMaterial", "STONE"));
-        worldEditManager = new WorldEditIntegrationManager(this);
-        loadMines();
-        new LapisMineCommand(this);
-        super.onEnable();
+    public static LapisMine getInstance() {
+        return instance;
     }
 
     @Override
@@ -75,15 +70,39 @@ public final class LapisMine extends LapisCorePlugin {
         return null;
     }
 
+    @Override
+    public void onEnable() {
+        LapisMine.instance = this;
+        config = new LapisCoreConfiguration(this, 1, 1);
+        fillMaterial = Material.getMaterial(getConfig().getString("FillMaterial", "STONE"));
+        worldEditManager = new WorldEditIntegrationManager(this);
+        loadMines();
+        new LapisMineCommand(this);
+        super.onEnable();
+    }
+
+    /**
+     * Get a list of all mines
+     *
+     * @return a list containing all mines
+     */
+    public List<Mine> getMines() {
+        return mines;
+    }
+
+    @SuppressWarnings("DataFlowIssue")
     private void loadMines() {
         File minesFolder = new File(getDataFolder(), "Mines");
         if (!minesFolder.exists())
-            minesFolder.mkdir();
-        //TODO: Add message for how many mines get loaded
+            if (!minesFolder.mkdir())
+                return;
+        if (minesFolder.listFiles() == null)
+            return;
         for (File f : minesFolder.listFiles()) {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(f);
             mines.add(new Mine(this, config));
         }
+        getLogger().info("Loaded " + minesFolder.listFiles().length + " mines!");
     }
 
     public void saveMines() {
@@ -92,7 +111,8 @@ public final class LapisMine extends LapisCorePlugin {
             File f = new File(minesFolder, m.getName() + ".yml");
             if (!f.exists()) {
                 try {
-                    f.createNewFile();
+                    if (!f.createNewFile())
+                        throw new IOException("Could not create file " + f.getName());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

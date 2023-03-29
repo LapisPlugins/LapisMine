@@ -22,7 +22,7 @@ public class Mine {
     private final LapisMine plugin;
     private final Composition composition;
     private final LocationUtils locationUtils = new LocationUtils();
-    private String name;
+    private final String name;
     private Location teleport, l1, l2;
     private Material surface;
     private Integer resetFrequency;
@@ -132,7 +132,8 @@ public class Mine {
         resetTask.cancel();
         //Delete the mines config data so that it won't be created again on reload
         File f = new File(plugin.getDataFolder(), "Mines" + File.separator + name + ".yml");
-        f.delete();
+        if (!f.delete())
+            plugin.getLogger().warning("Unable to delete mine YAML file for " + name);
     }
 
     /**
@@ -176,8 +177,8 @@ public class Mine {
                 for (int z = zMin; z <= zMax; z++) {
                     if (replaceOnlyAir) {
                         //Get the block and check if it is air
-                        Block b = l1.getWorld().getBlockAt(x, y, z);
-                        if (!b.getType().isAir()) {
+                        Block b = getBlockAt(x, y, z);
+                        if (b == null || !b.getType().isAir()) {
                             //If the block isn't air, then we skip it
                             continue;
                         }
@@ -195,9 +196,18 @@ public class Mine {
     }
 
     private void setBlock(int x, int y, int z, Material mat) {
-        //TODO: Potentially queue up the blocks to be placed later
+        //Could implement some kind of queue system here if the need ever arises
+        Block b = getBlockAt(x, y, z);
+        if (b == null)
+            return;
+        b.setType(mat, false);
+    }
+
+    private Block getBlockAt(int x, int y, int z) {
         World w = l1.getWorld();
-        w.getBlockAt(x, y, z).setType(mat, false);
+        if (w == null)
+            return null;
+        return w.getBlockAt(x, y, z);
     }
 
     /**
@@ -239,6 +249,10 @@ public class Mine {
      * @param mat a material to use for the top layer of the mine, must be a block
      */
     public void setSurface(Material mat) {
+        if (mat == null) {
+            this.surface = null;
+            return;
+        }
         if (!mat.isBlock())
             return;
         this.surface = mat;
@@ -269,16 +283,6 @@ public class Mine {
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * Set the name of this mine
-     *
-     * @param name the new name for this mine
-     */
-    public void setName(String name) {
-        //TODO: delete old named .yml file
-        this.name = name;
     }
 
     /**

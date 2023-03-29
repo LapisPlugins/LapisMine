@@ -24,6 +24,10 @@ public class WorldEdit {
 
     public boolean doesPlayerHaveSelection(Player p) {
         LocalSession session = getSession(p);
+        if (session == null)
+            return false;
+        if (session.getSelectionWorld() == null)
+            return false;
         return session.isSelectionDefined(session.getSelectionWorld());
     }
 

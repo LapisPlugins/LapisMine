@@ -1,7 +1,7 @@
 ConfigVersion: 1
 
-PrimaryColor: "6"
-SecondaryColor: "c"
+PrimaryColor: "&6"
+SecondaryColor: "&c"
 
 Create:
   Help: "/lapismine create (mineName)"

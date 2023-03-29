@@ -19,6 +19,7 @@ public class LapisMineCommand extends LapisCoreCommand {
     public LapisMineCommand(LapisMine plugin) {
         super(plugin, "lapismine", "Manage your mines", Collections.singletonList("mine"), true);
         this.plugin = plugin;
+        registerTabCompleter(new LapisMineTabCompleter(this));
     }
 
     @Override
@@ -62,6 +63,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                 }
                 m.deleteMine();
                 plugin.removeMine(m);
+                sendMessage(sender, "Remove.Success");
                 return;
             }
 
