@@ -6,6 +6,7 @@ Locations:
 Surface: "STONE"
 #In minutes, how often does the mine reset
 ResetFrequency: 15
+ReplaceOnlyAir: false
 Composition:
   - "Material:Probability"
   - "Stone:0.5"

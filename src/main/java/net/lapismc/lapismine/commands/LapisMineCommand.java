@@ -52,6 +52,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                 return;
             }
 
+            //mine remove (name)
             if (args[0].equalsIgnoreCase("remove")) {
                 String name = args[1];
                 Mine m = plugin.getMine(name);
@@ -64,7 +65,14 @@ public class LapisMineCommand extends LapisCoreCommand {
                 return;
             }
 
-            if (args[0].equalsIgnoreCase("composition")) {
+            //mine (name)
+            if (args.length == 1) {
+                sendMessage(sender, "Help", "Reset.Help", "Config.Help", "Composition.Help");
+                return;
+            }
+
+            //mine (name) composition
+            if (args[1].equalsIgnoreCase("composition")) {
                 if (args.length > 2) {
                     composition(sender, args, p);
                 } else {
@@ -73,19 +81,19 @@ public class LapisMineCommand extends LapisCoreCommand {
                 return;
             }
 
-            //mine reset (mineName)
-            if (args[0].equalsIgnoreCase("reset")) {
+            //mine (name) reset
+            if (args[1].equalsIgnoreCase("reset")) {
                 if (args.length == 2) {
-                    resetMine(sender, args[1]);
+                    resetMine(sender, args[0]);
                 } else {
                     sendMessage(sender, "Reset.Help");
                 }
                 return;
             }
-            //mine config (mineName) (settingName) (settingValue)
-            if (args[0].equalsIgnoreCase("config")) {
+            //mine (mineName) config (settingName) (settingValue)
+            if (args[1].equalsIgnoreCase("config")) {
                 if (args.length == 4) {
-                    String mineName = args[1];
+                    String mineName = args[0];
                     String settingName = args[2];
                     String settingValue = args[3];
                     Mine m = plugin.getMine(mineName);
@@ -111,7 +119,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                         case "resetfrequency":
                             int i;
                             try {
-                                i = Integer.valueOf(settingValue);
+                                i = Integer.parseInt(settingValue);
                             } catch (NumberFormatException e) {
                                 sendMessage(sender, "Config.ResetFrequency.NotInt");
                                 return;
@@ -125,6 +133,17 @@ public class LapisMineCommand extends LapisCoreCommand {
                             plugin.saveMines();
                             sendMessage(sender, "Config.TeleportSuccess");
                             break;
+                        case "replaceonlyair":
+                            if (settingValue.equalsIgnoreCase("true")) {
+                                m.setReplaceOnlyAir(true);
+                                sendMessage(sender, "Config.ReplaceOnlyAir.True");
+                            } else if (settingValue.equalsIgnoreCase("false")) {
+                                m.setReplaceOnlyAir(false);
+                                sendMessage(sender, "Config.ReplaceOnlyAir.False");
+                            } else {
+                                sendMessage(sender, "Config.ReplaceOnlyAir.NotBoolean");
+                            }
+                            break;
                         default:
                             sendMessage(sender, "Config.NoSuchSetting");
                     }
@@ -136,11 +155,11 @@ public class LapisMineCommand extends LapisCoreCommand {
     }
 
     private void composition(CommandSender sender, String[] args, Player p) {
-        //mine composition mine set MATERIAL PERCENT
-        //mine composition mine remove MATERIAL
-        //mine composition mine status
-        //mine composition mine fill
-        String name = args[1];
+        //mine mine composition set MATERIAL PERCENT
+        //mine mine composition remove MATERIAL
+        //mine mine composition status
+        //mine mine composition fill
+        String name = args[0];
         Mine m = plugin.getMine(name);
         if (m == null) {
             sendMessage(sender, "Error.NoSuchMine");
@@ -155,7 +174,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                 p.sendMessage(mat.name() + " - " + d);
             }
             sendMessage(sender, "Composition.RemainingPercentage");
-            p.sendMessage(m.getComposition().getUnassignedPercentage() + "");
+            p.sendMessage(String.valueOf(m.getComposition().getUnassignedPercentage()));
 
         } else if (command.equalsIgnoreCase("remove")) {
             if (args.length != 4) {
@@ -173,7 +192,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                 sendMessage(sender, "Composition.Remove.MaterialNotPresent");
             }
             sendMessage(sender, "Composition.RemainingPercentage");
-            p.sendMessage(m.getComposition().getUnassignedPercentage() + "");
+            p.sendMessage(String.valueOf(m.getComposition().getUnassignedPercentage()));
             //Save these changes to the mine
             plugin.saveMines();
 
@@ -205,7 +224,7 @@ public class LapisMineCommand extends LapisCoreCommand {
                 sendMessage(sender, "Composition.Set.PercentageTooHigh");
             }
             sendMessage(sender, "Composition.RemainingPercentage");
-            p.sendMessage(m.getComposition().getUnassignedPercentage() + "");
+            p.sendMessage(String.valueOf(m.getComposition().getUnassignedPercentage()));
             //Save the mine to keep these changes
             plugin.saveMines();
 
@@ -222,7 +241,7 @@ public class LapisMineCommand extends LapisCoreCommand {
             return;
         }
         if (m.resetMine()) {
-            m.startResetTimer();
+            m.restartResetTimer();
             sendMessage(sender, "Reset.Success");
         } else {
             sendMessage(sender, "Reset.CompositionIncomplete");

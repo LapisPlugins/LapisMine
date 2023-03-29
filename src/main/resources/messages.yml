@@ -13,34 +13,40 @@ Remove:
   Help: "/lapismine remove (mineName)"
   Success: "&pMine removed"
 
+Help: "&pBelow are the commands you can run for your mine:"
+
 Composition:
-  Help: "/lapismine composition (status|add|remove)"
+  Help: "/lapismine (mineName) composition (status|add|remove)"
   RemainingPercentage: "&pThe remaining percentage to assign is:"
   Status: "&pThe following is the current composition:"
   Fill: "&pThe remaining space in the composition was filled with the fill material"
   Remove:
-    Help: "/lapismine composition (mineName) remove (material)"
+    Help: "/lapismine (mineName) composition remove (material)"
     MaterialNotPresent: "&sThat material is not in the composition"
     Success: "&pMaterial removed from the composition of the mine"
   Set:
-    Help: "/lapismine composition (mineName) set (material) (percentage e.g. 0.20 = 20%)"
+    Help: "/lapismine (mineName) composition set (material) (percentage e.g. 0.20 = 20%)"
     NotABlock: "&sThe provided material is not a block, only blocks can be a part of a mines composition"
     InvalidPercentage: "&sThe percentage must be between 0.0 and 1.0"
     PercentageTooHigh: "&sThe percentage you gave was too high"
     Success: "&pThe material has been added to the composition"
 
 Config:
-  Help: "/lapismine config (mineName) (settingName) (settingValue)"
-  NoSuchSetting: "There is no setting with that name, the options are surface, resetfrequency and teleport"
+  Help: "/lapismine (mineName) config (settingName) (settingValue)"
+  NoSuchSetting: "There is no setting with that name, the options are Surface, ResetFrequency, Teleport and ReplaceOnlyAir"
   Surface:
     Success: "&pSurface updated!"
   ResetFrequency:
     NotInt: "&sThe frequency value must be a whole number"
     Success: "&pThe reset frequency has been updated"
   TeleportSuccess: "&pThe teleport location has been set to your current location"
+  ReplaceOnlyAir:
+    True: "&pOnly air will be replaced during mine resets from now on"
+    False: "&pAll blocks will be replace during mine resets from now on"
+    NotBoolean: "&sThe setting value for ReplaceOnlyAir must be true or false"
 
 Reset:
-  Help: "/lapismine reset (mineName)"
+  Help: "/lapismine (mineName) reset"
   Teleport: "&pThis mine is resetting, you have been teleported out for your own safety"
   Success: "&pMine resetting now!"
   CompositionIncomplete: "&sThe composition of this mine is incomplete. You must fix this before it can be reset"
