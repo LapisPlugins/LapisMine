@@ -1,31 +1,39 @@
 plugins {
     id 'java'
-    id 'maven'
-    id "com.github.johnrengelman.shadow" version "5.2.0"
+    id 'maven-publish'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
 group = 'net.lapismc'
 archivesBaseName = "LapisMine"
 version = '0.1.0'
-sourceCompatibility = '11'
-targetCompatibility = '11'
-defaultTasks 'clean', 'build', 'shadowJar', 'install'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+defaultTasks 'clean', 'build', 'shadowJar'
 
 repositories {
     mavenCentral()
-    mavenLocal()
+    //Spigot repo
     maven {
         name = "spigotmc-repo"
         url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
     }
+    //Personal Repo
+    maven {
+        name = "lapismc-repo"
+        url = "https://maven.lapismc.net/repository/maven/"
+    }
+    //Pretty time
     maven {
         name = "sonatype"
         url = "https://oss.sonatype.org/content/groups/public/"
     }
+    //World Edit
     maven {
         name = "World Edit Repo"
         url = "https://maven.enginehub.org/repo/"
     }
+    //Paper
     maven {
         name = "PaperMC Repo"
         url = uri("https://repo.papermc.io/repository/maven-public/")
@@ -33,27 +41,17 @@ repositories {
 }
 
 dependencies {
-    implementation 'net.lapismc:LapisCore:1.12.4'
-    implementation 'org.ocpsoft.prettytime:prettytime:5.0.6.Final'
-    compileOnly "org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT"
+    implementation 'net.lapismc:LapisCore:1.12.11'
+    implementation 'org.ocpsoft.prettytime:prettytime:5.0.7.Final'
+    compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
     compileOnly "com.sk89q.worldedit:worldedit-bukkit:7.2.9-SNAPSHOT"
 }
 
-
 shadowJar {
-    archiveFileName.set(archivesBaseName + "-" + project.getVersion() + ".jar")
+    archiveFileName.set(archivesBaseName + ".jar")
     exclude 'javax/**'
     relocate("org.ocpsoft.prettytime", "net.lapismc.lapismine.util.prettytime")
     relocate("net.lapismc.lapiscore", "net.lapismc.lapismine.util.core")
-}
-
-task sourcesJar(type: Jar) {
-    archiveClassifier.set('sources')
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar, shadowJar
 }
 
 processResources {
@@ -62,6 +60,31 @@ processResources {
     }
 }
 
+javadoc {
+    source = sourceSets.main.allJava
+    include("net/lapismc/afkplus/api/*.java")
+    include("net/lapismc/afkplus/playerdata/*.java")
+}
+
+task javadocJar(type: Jar) {
+    archiveClassifier.set('javadoc')
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar, shadowJar
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
 }

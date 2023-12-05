@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/LapisMine.main.iml" filepath="$PROJECT_DIR$/.idea/modules/LapisMine.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/net.lapismc.LapisMine.main.iml" filepath="$PROJECT_DIR$/.idea/modules/net.lapismc.LapisMine.main.iml" />
     </modules>
   </component>
 </project>

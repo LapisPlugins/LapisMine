@@ -41,5 +41,10 @@
       <option name="name" value="PaperMC Repo" />
       <option name="url" value="https://repo.papermc.io/repository/maven-public/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="lapismc-repo" />
+      <option name="name" value="lapismc-repo" />
+      <option name="url" value="https://maven.lapismc.net/repository/maven/" />
+    </remote-repository>
   </component>
 </project>

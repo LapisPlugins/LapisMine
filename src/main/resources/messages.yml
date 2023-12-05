@@ -41,8 +41,8 @@ Config:
     Success: "&pThe reset frequency has been updated"
   TeleportSuccess: "&pThe teleport location has been set to your current location"
   ReplaceOnlyAir:
-    True: "&pOnly air will be replaced during mine resets from now on"
-    False: "&pAll blocks will be replace during mine resets from now on"
+    Enabled: "&pOnly air will be replaced during mine resets from now on"
+    Disabled: "&pAll blocks will be replace during mine resets from now on"
     NotBoolean: "&sThe setting value for ReplaceOnlyAir must be true or false"
 
 Reset:

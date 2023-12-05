@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Benjamin Martin
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package net.lapismc.lapismine.mines;
 
 import net.lapismc.lapiscore.utils.LocationUtils;
@@ -143,17 +159,12 @@ public class Mine {
      * @return True if the players location is within the bounds of the mine, otherwise false
      */
     public boolean isPlayerInMine(Player p) {
-        int xMax, xMin, yMax, yMin, zMax, zMin;
-        xMax = Math.max(l1.getBlockX(), l2.getBlockX());
-        xMin = Math.min(l1.getBlockX(), l2.getBlockX());
-        yMax = Math.max(l1.getBlockY(), l2.getBlockY());
-        yMin = Math.min(l1.getBlockY(), l2.getBlockY());
-        zMax = Math.max(l1.getBlockZ(), l2.getBlockZ());
-        zMin = Math.min(l1.getBlockZ(), l2.getBlockZ());
+        //TODO: This doesnt trigger if you are standing on the bottom block
+        MineBounds bounds = new MineBounds(this);
         Location pLoc = p.getLocation().getBlock().getLocation();
-        if (pLoc.getX() < xMax && pLoc.getX() > xMin) {
-            if (pLoc.getZ() < zMax && pLoc.getZ() > zMin) {
-                return pLoc.getY() < yMax && pLoc.getY() > yMin;
+        if (pLoc.getX() < bounds.xMax && pLoc.getX() > bounds.xMin) {
+            if (pLoc.getZ() < bounds.zMax && pLoc.getZ() > bounds.zMin) {
+                return pLoc.getY() < bounds.yMax && pLoc.getY() > bounds.yMin;
             }
         }
         return false;
@@ -165,16 +176,10 @@ public class Mine {
      * WARNING: This only updates the blocks, it doesn't teleport players or send them a message
      */
     private void regenerateMine() {
-        int xMax, xMin, yMax, yMin, zMax, zMin;
-        xMax = Math.max(l1.getBlockX(), l2.getBlockX());
-        xMin = Math.min(l1.getBlockX(), l2.getBlockX());
-        yMax = Math.max(l1.getBlockY(), l2.getBlockY());
-        yMin = Math.min(l1.getBlockY(), l2.getBlockY());
-        zMax = Math.max(l1.getBlockZ(), l2.getBlockZ());
-        zMin = Math.min(l1.getBlockZ(), l2.getBlockZ());
-        for (int x = xMin; x <= xMax; x++) {
-            for (int y = yMin; y <= yMax; y++) {
-                for (int z = zMin; z <= zMax; z++) {
+        MineBounds bounds = new MineBounds(this);
+        for (int x = bounds.xMin; x <= bounds.xMax; x++) {
+            for (int y = bounds.yMin; y <= bounds.yMax; y++) {
+                for (int z = bounds.zMin; z <= bounds.zMax; z++) {
                     if (replaceOnlyAir) {
                         //Get the block and check if it is air
                         Block b = getBlockAt(x, y, z);
@@ -183,7 +188,7 @@ public class Mine {
                             continue;
                         }
                     }
-                    if (y == yMax && surface != null && surface != Material.AIR) {
+                    if (y == bounds.yMax && surface != null && surface != Material.AIR) {
                         //yMin is the top layer, if we have a surface set then this whole layer should be set as it
                         setBlock(x, y, z, surface);
                     } else {
