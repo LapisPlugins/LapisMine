@@ -113,9 +113,15 @@ public class Mine {
             plugin.tasks.removeTask(resetTask);
             resetTask.cancel();
         }
+        //TODO: If warnings are enabled, schedule that here, take the reset frequency and subtract the warning time from it
         //Make the new task and register it with LapisTaskHandler to make sure it gets shutdown on disable
         resetTask = Bukkit.getScheduler().runTaskTimer(plugin, this::resetMine, resetFrequency * 20 * 60, resetFrequency * 20 * 60);
         plugin.tasks.addTask(resetTask);
+    }
+
+    public void warnMineReset() {
+        //TODO: Warn players who are in the mine that it will reset soon
+        //TODO: Schedule the reset task based on config values
     }
 
     /**
