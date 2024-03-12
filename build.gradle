@@ -41,9 +41,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'net.lapismc:LapisCore:1.12.11'
-    implementation 'org.ocpsoft.prettytime:prettytime:5.0.7.Final'
-    compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
+    implementation 'net.lapismc:LapisCore:1.12.13'
+    compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
     compileOnly "com.sk89q.worldedit:worldedit-bukkit:7.2.9-SNAPSHOT"
 }
 

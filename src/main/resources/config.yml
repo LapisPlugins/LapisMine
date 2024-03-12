@@ -1,5 +1,13 @@
 ConfigVersion: 1
 
-# TODO: warning messages before reset with configurable time
+#Options are ActionBar, BossBar
+CountdownType: BossBar
+#Number of seconds to count down, set to 0 to disable
+CountdownTime: 60
+
+#Options are Title, ActionBar, Chat
+WarningType: ActionBar
+#How many seconds before a reset do we send a warning, 300 = 5 minutes, set to 0 to disable
+WarningTime: 300
 
 FillMaterial: STONE

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Benjamin Martin
+ * Copyright 2024 Benjamin Martin
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package net.lapismc.lapismine;
 
 import net.lapismc.lapiscore.LapisCoreConfiguration;
 import net.lapismc.lapiscore.LapisCorePlugin;
+import net.lapismc.lapiscore.utils.PrettyTimeUtil;
 import net.lapismc.lapismine.commands.LapisMineCommand;
 import net.lapismc.lapismine.mines.Mine;
 import net.lapismc.lapismine.worldedit.WorldEditIntegrationManager;
@@ -35,10 +36,25 @@ public final class LapisMine extends LapisCorePlugin {
     private static LapisMine instance;
     public Material fillMaterial;
     public WorldEditIntegrationManager worldEditManager;
+    public PrettyTimeUtil prettyTime;
     private final List<Mine> mines = new ArrayList<>();
 
     public static LapisMine getInstance() {
         return instance;
+    }
+
+    @Override
+    public void onEnable() {
+        LapisMine.instance = this;
+        config = new LapisCoreConfiguration(this, 1, 1);
+        //TODO: setup a file watcher which includes reloading mines when edited
+        fillMaterial = Material.getMaterial(getConfig().getString("FillMaterial", "STONE"));
+        worldEditManager = new WorldEditIntegrationManager(this);
+        prettyTime = new PrettyTimeUtil();
+        loadMines();
+        new LapisMineCommand(this);
+        super.onEnable();
+        //TODO: Need to setup a listener to see if a player joins in the mine, we need to teleport them out if its reset since then
     }
 
     @Override
@@ -84,17 +100,6 @@ public final class LapisMine extends LapisCorePlugin {
             }
         }
         return null;
-    }
-
-    @Override
-    public void onEnable() {
-        LapisMine.instance = this;
-        config = new LapisCoreConfiguration(this, 1, 1);
-        fillMaterial = Material.getMaterial(getConfig().getString("FillMaterial", "STONE"));
-        worldEditManager = new WorldEditIntegrationManager(this);
-        loadMines();
-        new LapisMineCommand(this);
-        super.onEnable();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Benjamin Martin
+ * Copyright 2024 Benjamin Martin
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,17 +18,23 @@ package net.lapismc.lapismine.mines;
 
 import net.lapismc.lapiscore.utils.LocationUtils;
 import net.lapismc.lapismine.LapisMine;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A class that represents a single mine instance
@@ -44,6 +50,9 @@ public class Mine {
     private Integer resetFrequency;
     private boolean replaceOnlyAir;
     private BukkitTask resetTask;
+    private BukkitTask warningTask;
+    private BukkitTask startCountdownTask;
+    private BukkitTask updateCountdownTask;
 
     /**
      * This initializer should be used when a mine is being created by code
@@ -113,15 +122,115 @@ public class Mine {
             plugin.tasks.removeTask(resetTask);
             resetTask.cancel();
         }
-        //TODO: If warnings are enabled, schedule that here, take the reset frequency and subtract the warning time from it
         //Make the new task and register it with LapisTaskHandler to make sure it gets shutdown on disable
         resetTask = Bukkit.getScheduler().runTaskTimer(plugin, this::resetMine, resetFrequency * 20 * 60, resetFrequency * 20 * 60);
         plugin.tasks.addTask(resetTask);
+        //Reset the warning tasks too
+        resetWarningTasks();
+    }
+
+    public void resetWarningTasks() {
+        //Cancel tasks currently scheduled
+        if (warningTask != null) {
+            plugin.tasks.removeTask(warningTask);
+            warningTask.cancel();
+        }
+        if (startCountdownTask != null) {
+            plugin.tasks.removeTask(startCountdownTask);
+            startCountdownTask.cancel();
+        }
+        if (updateCountdownTask != null) {
+            //This task is self canceling, so we don't cancel it, just remove it
+            plugin.tasks.removeTask(updateCountdownTask);
+        }
+        //If warnings are enabled, schedule that here, take the reset frequency and subtract the warning time from it
+        long resetDelay = resetFrequency * 20 * 60;
+        //Warning time is in seconds, convert to ticks and subtract from resetDelay
+        long warningDelay = resetDelay - (plugin.getConfig().getLong("WarningTime") * 20);
+        //CountdownTime is also in seconds
+        long countdownStartDelay = resetDelay - (plugin.getConfig().getLong("CountdownTime") * 20);
+        //Reset delay will be equal to warning delay if warning is disabled
+        if (warningDelay != resetDelay) {
+            warningTask = Bukkit.getScheduler().runTaskLater(plugin, this::warnMineReset, warningDelay);
+            plugin.tasks.addTask(warningTask);
+        }
+        //Check its enabled
+        if (countdownStartDelay != resetDelay) {
+            //Schedule the other task when the countdown should start
+            startCountdownTask = Bukkit.getScheduler().runTaskLater(plugin, this::startCountdownTask, countdownStartDelay);
+            plugin.tasks.addTask(startCountdownTask);
+        }
     }
 
     public void warnMineReset() {
-        //TODO: Warn players who are in the mine that it will reset soon
-        //TODO: Schedule the reset task based on config values
+        String warningType = plugin.getConfig().getString("WarningType", "ActionBar");
+        String warningMessageTemplate = plugin.config.getMessage("Reset.Warning");
+        //Get the reset epoch
+        int secondsBeforeReset = plugin.getConfig().getInt("WarningTime");
+        long resetEpoch = System.currentTimeMillis() + (secondsBeforeReset * 1000L);
+        String warningMessage = warningMessageTemplate.replace("%TimeUntilReset%",
+                plugin.prettyTime.getCleanTimeDifference(resetEpoch, 1));
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (!isPlayerInMine(p))
+                continue;
+            if (warningType.equalsIgnoreCase("Title")) {
+                p.sendTitle(plugin.config.getMessage("Reset.WarningTitle"), warningMessage, 10, 60, 10);
+            } else if (warningType.equalsIgnoreCase("ActionBar")) {
+                p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(warningMessage));
+            } else if (warningType.equalsIgnoreCase("Chat")) {
+                p.sendMessage(warningMessage);
+            }
+        }
+    }
+
+    public void startCountdownTask() {
+        //Get the message before text replacement
+        String messageTemplate = plugin.config.getMessage("Reset.Countdown");
+        String countdownType = plugin.getConfig().getString("CountdownType", "BossBar");
+        //Seconds remaining to be decremented
+        int totalSeconds = plugin.getConfig().getInt("CountdownTime");
+        AtomicInteger secondsRemaining = new AtomicInteger(totalSeconds);
+        BossBar bossBar = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID);
+        //Schedule to run every second to update the countdown
+        updateCountdownTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            //PrettyTime replacement
+            long resetEpoch = System.currentTimeMillis() + (secondsRemaining.get() * 1000L);
+            String countdownMessage = messageTemplate.replace("%TimeUntilReset%",
+                    plugin.prettyTime.getCleanTimeDifference(resetEpoch, 1));
+            if (countdownType.equalsIgnoreCase("BossBar")) {
+                //Update boss bar text
+                bossBar.setTitle(countdownMessage);
+                //Update progress
+                double progress = Math.min(1, Math.max(0, (double) secondsRemaining.get() / totalSeconds));
+                bossBar.setProgress(progress);
+                //Make sure its visible
+                if (!bossBar.isVisible())
+                    bossBar.setVisible(true);
+            }
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (isPlayerInMine(p)) {
+                    if (countdownType.equalsIgnoreCase("BossBar")) {
+                        //Check this player can see the boss bar
+                        if (!bossBar.getPlayers().contains(p))
+                            bossBar.addPlayer(p);
+                    } else if (countdownType.equalsIgnoreCase("ActionBar")) {
+                        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(countdownMessage));
+                    }
+                } else {
+                    if (countdownType.equalsIgnoreCase("BossBar")) {
+                        //Check if this player is shown the boss bar, if so, remove them
+                        if (bossBar.getPlayers().contains(p))
+                            bossBar.removePlayer(p);
+                    }
+                }
+            }
+            secondsRemaining.getAndDecrement();
+            //Cancel the task and hide the boss bar when we have gone below 0
+            if (secondsRemaining.get() < 0) {
+                bossBar.setVisible(false);
+                updateCountdownTask.cancel();
+            }
+        }, 0, 20);
     }
 
     /**
@@ -142,6 +251,7 @@ public class Mine {
             }
         }
         regenerateMine();
+        resetWarningTasks();
         return true;
     }
 
@@ -165,12 +275,11 @@ public class Mine {
      * @return True if the players location is within the bounds of the mine, otherwise false
      */
     public boolean isPlayerInMine(Player p) {
-        //TODO: This doesnt trigger if you are standing on the bottom block
         MineBounds bounds = new MineBounds(this);
         Location pLoc = p.getLocation().getBlock().getLocation();
-        if (pLoc.getX() < bounds.xMax && pLoc.getX() > bounds.xMin) {
-            if (pLoc.getZ() < bounds.zMax && pLoc.getZ() > bounds.zMin) {
-                return pLoc.getY() < bounds.yMax && pLoc.getY() > bounds.yMin;
+        if (pLoc.getX() <= bounds.xMax && pLoc.getX() >= bounds.xMin) {
+            if (pLoc.getZ() <= bounds.zMax && pLoc.getZ() >= bounds.zMin) {
+                return pLoc.getY() <= bounds.yMax && pLoc.getY() >= bounds.yMin;
             }
         }
         return false;

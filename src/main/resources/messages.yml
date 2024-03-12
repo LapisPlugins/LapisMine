@@ -49,6 +49,9 @@ Reset:
   Help: "/lapismine (mineName) reset"
   Teleport: "&pThis mine is resetting, you have been teleported out for your own safety"
   Success: "&pMine resetting now!"
+  WarningTitle: "&pMine Reset"
+  Warning: "&sThis mine will be resetting in %TimeUntilReset%"
+  Countdown: "&pMine reset in %TimeUntilReset%"
   CompositionIncomplete: "&sThe composition of this mine is incomplete. You must fix this before it can be reset"
 
 Error:
