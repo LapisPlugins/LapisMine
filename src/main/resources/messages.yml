@@ -48,6 +48,8 @@ Config:
 Reset:
   Help: "/lapismine (mineName) reset"
   Teleport: "&pThis mine is resetting, you have been teleported out for your own safety"
+  LoginTeleport: "&pYou logged out while in a mine, it has reset since you were online,
+  you have been teleported out for your safety"
   Success: "&pMine resetting now!"
   WarningTitle: "&pMine Reset"
   Warning: "&sThis mine will be resetting in %TimeUntilReset%"

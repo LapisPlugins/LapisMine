@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Benjamin Martin
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
 package net.lapismc.lapismine.mines;
 
 import net.lapismc.lapismine.LapisMine;
@@ -16,6 +32,8 @@ public class Composition {
 
     /**
      * This initializer should be used when it is a new composition that is yet to be built
+     *
+     * @param plugin The LapisMine main class
      */
     public Composition(LapisMine plugin) {
         this.plugin = plugin;
@@ -26,6 +44,7 @@ public class Composition {
     /**
      * This initializer should be used when loading from a mine config.
      *
+     * @param plugin    The LapisMine main class
      * @param materials The Composition array list to be parsed
      */
     public Composition(LapisMine plugin, List<String> materials) {
@@ -143,6 +162,11 @@ public class Composition {
         return data;
     }
 
+    /**
+     * Calculates and returns the unassigned percentage
+     *
+     * @return the percentage of the mines composition that has not yet been assigned to a material
+     */
     public double getUnassignedPercentage() {
         return 1 - getTotalPercentage();
     }

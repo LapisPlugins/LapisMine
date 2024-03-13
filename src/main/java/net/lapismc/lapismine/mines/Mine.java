@@ -48,11 +48,13 @@ public class Mine {
     private Location teleport, l1, l2;
     private Material surface;
     private Integer resetFrequency;
+    private long lastReset = 0;
     private boolean replaceOnlyAir;
     private BukkitTask resetTask;
     private BukkitTask warningTask;
     private BukkitTask startCountdownTask;
     private BukkitTask updateCountdownTask;
+    private BossBar countdownBossBar;
 
     /**
      * This initializer should be used when a mine is being created by code
@@ -97,6 +99,7 @@ public class Mine {
         composition = new Composition(plugin, config.getStringList("Composition"));
         surface = Material.getMaterial(config.getString("Surface", ""));
         resetFrequency = config.getInt("ResetFrequency");
+        lastReset = config.getLong("LastReset");
         replaceOnlyAir = config.getBoolean("ReplaceOnlyAir");
         restartResetTimer();
     }
@@ -111,6 +114,32 @@ public class Mine {
      */
     public Mine(LapisMine plugin, String name, Location l1, Location l2) {
         this(plugin, name, l1, l2, new Composition(plugin), null, 15, false);
+    }
+
+    /**
+     * Cleanly cancel all tasks and get the mine ready to be destroyed
+     * This is used to reload a mine when a mines YAML file is edited
+     */
+    public void shutdownMine() {
+        //Shut down all the tasks for the mine
+        if (resetTask != null) {
+            plugin.tasks.removeTask(resetTask);
+            resetTask.cancel();
+        }
+        if (warningTask != null) {
+            plugin.tasks.removeTask(warningTask);
+            warningTask.cancel();
+        }
+        if (startCountdownTask != null) {
+            plugin.tasks.removeTask(startCountdownTask);
+            startCountdownTask.cancel();
+        }
+        if (updateCountdownTask != null) {
+            plugin.tasks.removeTask(updateCountdownTask);
+            updateCountdownTask.cancel();
+            if (countdownBossBar != null)
+                countdownBossBar.setVisible(false);
+        }
     }
 
     /**
@@ -129,6 +158,10 @@ public class Mine {
         resetWarningTasks();
     }
 
+    /**
+     * Cancels any running warning or countdown tasks and reschedules them
+     * This should only be run after resetting the mine so that the warnings will line up with the next reset
+     */
     public void resetWarningTasks() {
         //Cancel tasks currently scheduled
         if (warningTask != null) {
@@ -140,8 +173,10 @@ public class Mine {
             startCountdownTask.cancel();
         }
         if (updateCountdownTask != null) {
-            //This task is self canceling, so we don't cancel it, just remove it
             plugin.tasks.removeTask(updateCountdownTask);
+            updateCountdownTask.cancel();
+            if (countdownBossBar != null)
+                countdownBossBar.setVisible(false);
         }
         //If warnings are enabled, schedule that here, take the reset frequency and subtract the warning time from it
         long resetDelay = resetFrequency * 20 * 60;
@@ -162,6 +197,9 @@ public class Mine {
         }
     }
 
+    /**
+     * Warn players currently in the mine, that it wil be resetting soon
+     */
     public void warnMineReset() {
         String warningType = plugin.getConfig().getString("WarningType", "ActionBar");
         String warningMessageTemplate = plugin.config.getMessage("Reset.Warning");
@@ -183,6 +221,11 @@ public class Mine {
         }
     }
 
+    /**
+     * Creates a repeating task to form a countdown for players currently in the mine
+     * It will only be visible to players currently in the mine each time it ticks down a second
+     * It automatically cancels itself after it reaches 0
+     */
     public void startCountdownTask() {
         //Get the message before text replacement
         String messageTemplate = plugin.config.getMessage("Reset.Countdown");
@@ -190,7 +233,7 @@ public class Mine {
         //Seconds remaining to be decremented
         int totalSeconds = plugin.getConfig().getInt("CountdownTime");
         AtomicInteger secondsRemaining = new AtomicInteger(totalSeconds);
-        BossBar bossBar = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID);
+        countdownBossBar = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID);
         //Schedule to run every second to update the countdown
         updateCountdownTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             //PrettyTime replacement
@@ -199,35 +242,35 @@ public class Mine {
                     plugin.prettyTime.getCleanTimeDifference(resetEpoch, 1));
             if (countdownType.equalsIgnoreCase("BossBar")) {
                 //Update boss bar text
-                bossBar.setTitle(countdownMessage);
+                countdownBossBar.setTitle(countdownMessage);
                 //Update progress
                 double progress = Math.min(1, Math.max(0, (double) secondsRemaining.get() / totalSeconds));
-                bossBar.setProgress(progress);
+                countdownBossBar.setProgress(progress);
                 //Make sure its visible
-                if (!bossBar.isVisible())
-                    bossBar.setVisible(true);
+                if (!countdownBossBar.isVisible())
+                    countdownBossBar.setVisible(true);
             }
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (isPlayerInMine(p)) {
                     if (countdownType.equalsIgnoreCase("BossBar")) {
                         //Check this player can see the boss bar
-                        if (!bossBar.getPlayers().contains(p))
-                            bossBar.addPlayer(p);
+                        if (!countdownBossBar.getPlayers().contains(p))
+                            countdownBossBar.addPlayer(p);
                     } else if (countdownType.equalsIgnoreCase("ActionBar")) {
                         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(countdownMessage));
                     }
                 } else {
                     if (countdownType.equalsIgnoreCase("BossBar")) {
                         //Check if this player is shown the boss bar, if so, remove them
-                        if (bossBar.getPlayers().contains(p))
-                            bossBar.removePlayer(p);
+                        if (countdownBossBar.getPlayers().contains(p))
+                            countdownBossBar.removePlayer(p);
                     }
                 }
             }
             secondsRemaining.getAndDecrement();
             //Cancel the task and hide the boss bar when we have gone below 0
             if (secondsRemaining.get() < 0) {
-                bossBar.setVisible(false);
+                countdownBossBar.setVisible(false);
                 updateCountdownTask.cancel();
             }
         }, 0, 20);
@@ -250,6 +293,7 @@ public class Mine {
                 p.sendMessage(plugin.config.getMessage("Reset.Teleport"));
             }
         }
+        lastReset = System.currentTimeMillis();
         regenerateMine();
         resetWarningTasks();
         return true;
@@ -260,8 +304,8 @@ public class Mine {
      * This won't remove it from the mines list in the main class, call plugin#removeMine(Mine) for that
      */
     public void deleteMine() {
-        //Cancel the reset task
-        resetTask.cancel();
+        //Cancel all tasks
+        shutdownMine();
         //Delete the mines config data so that it won't be created again on reload
         File f = new File(plugin.getDataFolder(), "Mines" + File.separator + name + ".yml");
         if (!f.delete())
@@ -277,6 +321,10 @@ public class Mine {
     public boolean isPlayerInMine(Player p) {
         MineBounds bounds = new MineBounds(this);
         Location pLoc = p.getLocation().getBlock().getLocation();
+        //Check they are in the same world
+        if (!pLoc.getWorld().equals(l1.getWorld()))
+            return false;
+        //Check if they are within the bounds of the mine
         if (pLoc.getX() <= bounds.xMax && pLoc.getX() >= bounds.xMin) {
             if (pLoc.getZ() <= bounds.zMax && pLoc.getZ() >= bounds.zMin) {
                 return pLoc.getY() <= bounds.yMax && pLoc.getY() >= bounds.yMin;
@@ -346,6 +394,8 @@ public class Mine {
             config.set("Surface", null);
         config.set("Composition", composition.parseToStringList());
         config.set("ResetFrequency", resetFrequency);
+        config.set("LastReset", lastReset);
+        config.set("ReplaceOnlyAir", replaceOnlyAir);
         try {
             File f = new File(plugin.getDataFolder(), "Mines" + File.separator + name + ".yml");
             config.save(f);
@@ -394,6 +444,15 @@ public class Mine {
      */
     public void setResetFrequency(int minutes) {
         this.resetFrequency = minutes;
+    }
+
+    /**
+     * Get the epoch for when the mine last reset
+     *
+     * @return the system time when the mine last reset, 0 if this mine has never reset
+     */
+    public long getLastReset() {
+        return lastReset;
     }
 
     /**

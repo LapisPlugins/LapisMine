@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Benjamin Martin
+ * Copyright 2024 Benjamin Martin
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,10 +18,21 @@ package net.lapismc.lapismine.mines;
 
 import org.bukkit.Location;
 
+/**
+ * a class to calculate and access the min and max coordinates of a mine
+ */
 public class MineBounds {
 
+    /**
+     * The calculated values are stored here for you to access
+     */
     public int xMax, xMin, yMax, yMin, zMax, zMin;
 
+    /**
+     * Calculate the bounds of a mine
+     *
+     * @param mine The mine to calculate bounds for
+     */
     public MineBounds(Mine mine) {
         Location l1 = mine.getL1();
         Location l2 = mine.getL2();

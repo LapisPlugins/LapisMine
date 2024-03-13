@@ -61,8 +61,8 @@ processResources {
 
 javadoc {
     source = sourceSets.main.allJava
-    include("net/lapismc/afkplus/api/*.java")
-    include("net/lapismc/afkplus/playerdata/*.java")
+    include("net/lapismc/lapismine/mines/*.java")
+    include("net/lapismc/lapismine/LapisMine.java")
 }
 
 task javadocJar(type: Jar) {
