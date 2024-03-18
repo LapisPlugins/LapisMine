@@ -21,6 +21,7 @@ import net.lapismc.lapiscore.LapisCorePlugin;
 import net.lapismc.lapiscore.utils.PrettyTimeUtil;
 import net.lapismc.lapismine.commands.LapisMineCommand;
 import net.lapismc.lapismine.mines.Mine;
+import net.lapismc.lapismine.scheduler.LapisMineRunnable;
 import net.lapismc.lapismine.worldedit.WorldEditIntegrationManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -54,6 +55,10 @@ public final class LapisMine extends LapisCorePlugin implements Listener {
      * A utility class for formatting time differences as Strings
      */
     public PrettyTimeUtil prettyTime;
+    /**
+     * A utility class for regenerating any size mine without causing lag
+     */
+    public LapisMineRunnable scheduler;
     private final List<Mine> mines = new ArrayList<>();
 
     /**
@@ -68,6 +73,7 @@ public final class LapisMine extends LapisCorePlugin implements Listener {
     @Override
     public void onEnable() {
         LapisMine.instance = this;
+        scheduler = new LapisMineRunnable(this);
         config = new LapisCoreConfiguration(this, 1, 1);
         new LapisMineFileWatcher(this);
         fillMaterial = Material.getMaterial(getConfig().getString("FillMaterial", "STONE"));

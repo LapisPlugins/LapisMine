@@ -18,6 +18,7 @@ package net.lapismc.lapismine.mines;
 
 import net.lapismc.lapiscore.utils.LocationUtils;
 import net.lapismc.lapismine.LapisMine;
+import net.lapismc.lapismine.scheduler.BlockSetTask;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -340,8 +341,9 @@ public class Mine {
      */
     private void regenerateMine() {
         MineBounds bounds = new MineBounds(this);
-        for (int x = bounds.xMin; x <= bounds.xMax; x++) {
-            for (int y = bounds.yMin; y <= bounds.yMax; y++) {
+        //Start from the top and work down
+        for (int y = bounds.yMax; y >= bounds.yMin; y--) {
+            for (int x = bounds.xMin; x <= bounds.xMax; x++) {
                 for (int z = bounds.zMin; z <= bounds.zMax; z++) {
                     if (replaceOnlyAir) {
                         //Get the block and check if it is air
@@ -364,11 +366,8 @@ public class Mine {
     }
 
     private void setBlock(int x, int y, int z, Material mat) {
-        //Could implement some kind of queue system here if the need ever arises
-        Block b = getBlockAt(x, y, z);
-        if (b == null)
-            return;
-        b.setType(mat, false);
+        //Give the scheduler a new block set task for the proper location and material
+        plugin.scheduler.addTask(new BlockSetTask(new Location(l1.getWorld(), x, y, z), mat));
     }
 
     private Block getBlockAt(int x, int y, int z) {
