@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Benjamin Martin
+ * Copyright 2025 Benjamin Martin
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package net.lapismc.lapismine.mines;
 
+import net.lapismc.lapiscore.utils.LapisTaskHandler;
 import net.lapismc.lapiscore.utils.LocationUtils;
 import net.lapismc.lapismine.LapisMine;
 import net.lapismc.lapismine.scheduler.BlockSetTask;
@@ -31,7 +32,6 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,10 +51,10 @@ public class Mine {
     private Integer resetFrequency;
     private long lastReset = 0;
     private boolean replaceOnlyAir;
-    private BukkitTask resetTask;
-    private BukkitTask warningTask;
-    private BukkitTask startCountdownTask;
-    private BukkitTask updateCountdownTask;
+    private LapisTaskHandler.LapisTask resetTask;
+    private LapisTaskHandler.LapisTask warningTask;
+    private LapisTaskHandler.LapisTask startCountdownTask;
+    private LapisTaskHandler.LapisTask updateCountdownTask;
     private BossBar countdownBossBar;
 
     /**
@@ -153,7 +153,7 @@ public class Mine {
             resetTask.cancel();
         }
         //Make the new task and register it with LapisTaskHandler to make sure it gets shutdown on disable
-        resetTask = Bukkit.getScheduler().runTaskTimer(plugin, this::resetMine, resetFrequency * 20 * 60, resetFrequency * 20 * 60);
+        resetTask = plugin.tasks.runTaskTimer(this::resetMine, resetFrequency * 20 * 60, resetFrequency * 20 * 60, false);
         plugin.tasks.addTask(resetTask);
         //Reset the warning tasks too
         resetWarningTasks();
@@ -187,13 +187,13 @@ public class Mine {
         long countdownStartDelay = resetDelay - (plugin.getConfig().getLong("CountdownTime") * 20);
         //Reset delay will be equal to warning delay if warning is disabled
         if (warningDelay != resetDelay) {
-            warningTask = Bukkit.getScheduler().runTaskLater(plugin, this::warnMineReset, warningDelay);
+            warningTask = plugin.tasks.runTaskLater(this::warnMineReset, warningDelay, false);
             plugin.tasks.addTask(warningTask);
         }
         //Check its enabled
         if (countdownStartDelay != resetDelay) {
             //Schedule the other task when the countdown should start
-            startCountdownTask = Bukkit.getScheduler().runTaskLater(plugin, this::startCountdownTask, countdownStartDelay);
+            startCountdownTask = plugin.tasks.runTaskLater(this::startCountdownTask, countdownStartDelay, false);
             plugin.tasks.addTask(startCountdownTask);
         }
     }
@@ -236,7 +236,7 @@ public class Mine {
         AtomicInteger secondsRemaining = new AtomicInteger(totalSeconds);
         countdownBossBar = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID);
         //Schedule to run every second to update the countdown
-        updateCountdownTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        updateCountdownTask = plugin.tasks.runTaskTimer(() -> {
             //PrettyTime replacement
             long resetEpoch = System.currentTimeMillis() + (secondsRemaining.get() * 1000L);
             String countdownMessage = messageTemplate.replace("%TimeUntilReset%",
@@ -274,7 +274,7 @@ public class Mine {
                 countdownBossBar.setVisible(false);
                 updateCountdownTask.cancel();
             }
-        }, 0, 20);
+        }, 0, 20, false);
     }
 
     /**

@@ -2,6 +2,7 @@ name: LapisMine
 version: ${project.version}
 main: net.lapismc.lapismine.LapisMine
 api-version: 1.19
+folia-supported: true
 authors: [ Dart2112 ]
 softdepend:
   - WorldEdit

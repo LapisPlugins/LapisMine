@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Benjamin Martin
+ * Copyright 2025 Benjamin Martin
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package net.lapismc.lapismine.scheduler;
 
 import net.lapismc.lapismine.LapisMine;
-import org.bukkit.Bukkit;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -25,16 +24,18 @@ import java.util.List;
 
 public class LapisMineRunnable implements Runnable {
 
+    private final LapisMine plugin;
     private final double maxMillisPerTick = 5;
     private final Deque<MineTask> taskDeque = new ArrayDeque<>();
     private final TickTimeStorage tickTimeStorage;
     private double currentMillisPerTick = maxMillisPerTick;
 
     public LapisMineRunnable(LapisMine plugin) {
+        this.plugin = plugin;
         tickTimeStorage = new TickTimeStorage(25);
-        Bukkit.getScheduler().runTaskTimer(plugin, this, 1, 1);
+        plugin.tasks.runTaskTimer(this, 1, 1, false);
         //Start delayed a bit so that the values have time to come in
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> currentMillisPerTick += calculateAdjustment(), 20 * 10, 20);
+        plugin.tasks.runTaskTimer(() -> currentMillisPerTick += calculateAdjustment(), 20 * 10, 20, false);
     }
 
     public void addTask(MineTask task) {
@@ -47,10 +48,12 @@ public class LapisMineRunnable implements Runnable {
         tickTimeStorage.add(systemNanos);
         int nanosThisTick = (int) (currentMillisPerTick * 1E6);
         long stopTime = systemNanos + nanosThisTick;
-
         MineTask nextTask;
         while (System.nanoTime() <= stopTime && (nextTask = taskDeque.poll()) != null) {
-            nextTask.run();
+            if (nextTask instanceof BlockSetTask)
+                plugin.tasks.runRegionalTaskNow(nextTask, ((BlockSetTask) nextTask).getLocation());
+            else
+                nextTask.run();
         }
     }
 
